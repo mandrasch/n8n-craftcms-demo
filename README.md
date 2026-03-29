@@ -4,7 +4,7 @@ Write a ticket with a markdown spec. An AI agent picks it up, creates a branch, 
 
 That's the goal. Right now, the preview infrastructure is working: open a PR and a full Craft CMS environment is deployed automatically.
 
-> **Experimental.** Built with [Claude Code](https://claude.com/claude-code) via SSH on a bare Hetzner server. Learning reference, not production-ready. Do not run on servers with sensitive data.
+> **Experimental.** ⚠️ Built with [Claude Code](https://claude.com/claude-code) via SSH on a bare Hetzner server. Learning reference, not production-ready. Do not run on servers with sensitive data. No liability, use at your own risk.
 
 ## Screenshots
 
