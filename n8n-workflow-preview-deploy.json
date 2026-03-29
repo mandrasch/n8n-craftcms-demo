@@ -1,0 +1,142 @@
+{
+  "name": "PR Preview Deploy",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "preview-deploy",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [-496, 128],
+      "webhookId": "preview-deploy"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": ""
+          },
+          "conditions": [
+            {
+              "id": "condition-closed",
+              "leftValue": "={{ $json.body.action }}",
+              "rightValue": "closed",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000002",
+      "name": "Is Closed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-256, 128]
+    },
+    {
+      "parameters": {
+        "resource": "command",
+        "command": "=/home/deploy/preview-system/scripts/destroy.sh \"{{ $('Webhook').item.json.body.repository.name }}\" \"{{ $('Webhook').item.json.body.pull_request.number }}\""
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000003",
+      "name": "Destroy Preview",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "resource": "command",
+        "command": "=/home/deploy/preview-system/scripts/launch.sh \"{{ $('Webhook').item.json.body.pull_request.head.ref }}\" \"{{ $('Webhook').item.json.body.repository.clone_url }}\" \"{{ $('Webhook').item.json.body.repository.name }}\" \"{{ $('Webhook').item.json.body.pull_request.number }}\""
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000004",
+      "name": "Launch Preview",
+      "type": "n8n-nodes-base.ssh",
+      "typeVersion": 1,
+      "position": [0, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $('Webhook').item.json.body.repository.full_name }}/issues/{{ $('Webhook').item.json.body.pull_request.number }}/comments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: '## Preview destroyed\\n\\nPR #' + $('Webhook').item.json.body.pull_request.number + ' preview has been torn down.' }) }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000005",
+      "name": "Comment Destroyed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [272, 0],
+      "credentials": {
+        "githubApi": {
+          "id": "",
+          "name": "GitHub API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.github.com/repos/{{ $('Webhook').item.json.body.repository.full_name }}/issues/{{ $('Webhook').item.json.body.pull_request.number }}/comments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "githubApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ body: '## Preview deployed\\n\\nBranch: `' + $('Webhook').item.json.body.pull_request.head.ref + '`\\nPR: #' + $('Webhook').item.json.body.pull_request.number + '\\nURL: http://' + $('Webhook').item.json.body.repository.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') + '-pr-' + $('Webhook').item.json.body.pull_request.number + '.preview.' + '{{ $env.SERVER_IP || \"SERVER_IP\" }}' + '.sslip.io\\n\\nAdmin: http://' + $('Webhook').item.json.body.repository.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') + '-pr-' + $('Webhook').item.json.body.pull_request.number + '.preview.' + '{{ $env.SERVER_IP || \"SERVER_IP\" }}' + '.sslip.io/admin' }) }}",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000006",
+      "name": "Comment Preview URL",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [272, 240],
+      "credentials": {
+        "githubApi": {
+          "id": "",
+          "name": "GitHub API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          { "node": "Is Closed", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Is Closed": {
+      "main": [
+        [{ "node": "Destroy Preview", "type": "main", "index": 0 }],
+        [{ "node": "Launch Preview", "type": "main", "index": 0 }]
+      ]
+    },
+    "Launch Preview": {
+      "main": [
+        [{ "node": "Comment Preview URL", "type": "main", "index": 0 }]
+      ]
+    },
+    "Destroy Preview": {
+      "main": [
+        [{ "node": "Comment Destroyed", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

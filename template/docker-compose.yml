@@ -1,0 +1,39 @@
+# TEMPLATE — Variables replaced by launch script:
+#   __BRANCH__              = sanitized branch name
+#   __DB_NAME__             = database name
+#   __DOMAIN__              = preview subdomain
+#   __MYSQL_ROOT_PASSWORD__ = from .env
+#   __CRAFT_SECURITY_KEY__  = from .env (or auto-generated)
+
+services:
+  php:
+    image: craftcms/nginx:8.2
+    container_name: craft-__BRANCH__
+    restart: unless-stopped
+    environment:
+      CRAFT_DB_DRIVER: mysql
+      CRAFT_DB_SERVER: shared-mysql
+      CRAFT_DB_PORT: "3306"
+      CRAFT_DB_DATABASE: __DB_NAME__
+      CRAFT_DB_USER: root
+      CRAFT_DB_PASSWORD: __MYSQL_ROOT_PASSWORD__
+      CRAFT_ENVIRONMENT: staging
+      CRAFT_SECURITY_KEY: __CRAFT_SECURITY_KEY__
+      PRIMARY_SITE_URL: http://__DOMAIN__
+    volumes:
+      - ./src:/app
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.__BRANCH__.rule=Host(`__DOMAIN__`)"
+      - "traefik.http.routers.__BRANCH__.entrypoints=web"
+      - "traefik.http.services.__BRANCH__.loadbalancer.server.port=8080"
+      - "preview.branch=__BRANCH__"
+    networks:
+      - proxy
+      - backend
+
+networks:
+  proxy:
+    external: true
+  backend:
+    external: true
