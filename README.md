@@ -75,37 +75,44 @@ Each preview gets its own subdomain: `reponame-pr-21.preview.SERVER_IP.sslip.io`
 
 **Known issues:**
 - Traefik may need a restart after first container launch if it returns 504
+- `SERVER_IP` is hardcoded in `n8n-workflow-preview-deploy.json` — needs to be updated per deployment (n8n expressions don't support nested `{{ }}`, so env vars can't be used here)
+- n8n drops IF-node connections on JSON import — must be reconnected manually after every import
 
-## Setup
+## Getting Started
 
-> See `CLAUDE.md` for the full step-by-step guide (phases 1–12).
+### Prerequisites
+- A **Hetzner Cloud** account (CAX31 ARM64 recommended, ~€7/mo)
+- A **GitHub** fine-grained personal access token (Issues + Pull requests: read & write)
+- [Claude Code](https://claude.com/claude-code) installed locally
 
-### 1. Provision a server
-- Hetzner CAX31 (ARM64, Ubuntu 24.04) or similar
-- SSH key auth: `ssh-copy-id root@YOUR_IP`
+### Setup (5 minutes of manual work, Claude Code does the rest)
 
-### 2. Configure
-- Copy `.env.example` to `.env` and fill in your values
-- Public repos: HTTPS clone URL — no deploy key needed
-- Private repos: SSH clone URL + deploy key (see CLAUDE.md Phase 10)
+1. **Create a Hetzner server** — CAX31, Ubuntu 24.04, add your SSH key during creation
 
-### 3. Run the setup
-- Follow `CLAUDE.md` phases 1–12, or hand it to Claude Code and let it SSH in
+2. **Clone this repo and configure**
+   ```bash
+   git clone https://github.com/mandrasch/n8n-craftcms.git
+   cd n8n-craftcms
+   cp .env.example .env
+   # Edit .env — fill in your server IP and choose a MySQL password (no $ in password!)
+   ```
 
-### 4. Set up n8n
-- Open `http://n8n.preview.YOUR_IP.sslip.io/` and create an account
-- Import `n8n-workflow-preview-deploy.json`
-- Manually connect the IF node outputs (n8n import bug)
-- Add a **GitHub API** credential (fine-grained token with Issues + PR write access)
-- Select the credential on both HTTP Request nodes
-- Activate the workflow
+3. **Copy your SSH key to the server**
+   ```bash
+   ssh-copy-id root@YOUR_SERVER_IP
+   ```
 
-### 5. Add the GitHub webhook
-- Repo → Settings → Webhooks → Add webhook
-- **Payload URL:** `http://n8n.preview.YOUR_IP.sslip.io/webhook/preview-deploy`
-- **Content type:** `application/json`
-- **Events:** Pull requests only
+4. **Open the folder in Claude Code and paste this prompt:**
 
-### 6. Test it
-- Open a PR → preview URL appears as a comment
-- Close the PR → preview is destroyed
+   > See CLAUDE.md — SSH into the server and set up the preview system. My .env is configured. After server setup, guide me through n8n workflow import and GitHub webhook setup.
+
+   Claude Code will SSH into your server and run through all setup phases automatically (Docker, Traefik, MySQL, n8n, scripts).
+
+5. **Manual steps after server setup** (Claude Code will guide you):
+   - Open n8n at `http://n8n.preview.YOUR_IP.sslip.io/`, create an account
+   - Import `n8n-workflow-preview-deploy.json` — manually connect the IF node outputs (n8n import bug, see CLAUDE.md)
+   - Add a **GitHub API** credential with your token
+   - Add a GitHub webhook to your repo pointing to `http://n8n.preview.YOUR_IP.sslip.io/webhook/preview-deploy`
+   - Activate the workflow
+
+6. **Test it** — open a PR on your Craft CMS repo, a preview URL should appear as a PR comment

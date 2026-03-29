@@ -12,6 +12,7 @@ All configuration values are sourced from `.env` (see `.env.example`).
 - **Always keep docs in sync.** After any task or bugfix, update the affected files in the repo (`scripts/`, `infra/`, `template/`, `n8n-workflow-preview-deploy.json`) AND this `CLAUDE.md` and `README.md` to reflect the changes. Never leave the repo out of date with what's deployed on the server.
 - **Deploy changes to the server** after updating repo files (scripts, templates, configs).
 - **Document gotchas** in the Important Notes section when you hit and solve an issue.
+- **Never patch the n8n database directly.** To update the n8n workflow, edit `n8n-workflow-preview-deploy.json` in this repo, then instruct the user to delete the old workflow in the n8n UI and import the updated JSON file. Direct DB patches get reverted by n8n's internal caching on restart.
 
 ## Current State
 
@@ -380,11 +381,14 @@ All values are read from `~/preview-system/.env` (see `.env.example` in this rep
 - **SSH key auth only** — no password auth. Use `ssh-copy-id` to set up access before running setup.
 - **ARM64 server** (Hetzner CAX31). Docker images must support `linux/arm64`. The `craftcms/nginx:8.2`, `mysql:8.0`, `traefik:latest`, and `n8nio/n8n` images all support ARM64. Note: `craftcms/nginx:8.3` does not exist — use `8.2`.
 - **Traefik** must use `latest` (not v3.1/v3.4) — older versions have a Docker API client that's incompatible with Docker Engine 29.x. If Traefik returns 504 for new containers, restart it (`docker compose up -d --force-recreate` in the traefik directory) — it can get stale routing state.
+- **Traefik network routing:** Must set `--providers.docker.network=proxy` in Traefik config, otherwise Traefik may pick the wrong Docker network IP (e.g. `backend` instead of `proxy`) and return 504. The `launch.sh` script also restarts Traefik after launching each container as a workaround.
 - **MySQL password:** do NOT use `$` in the password. It causes issues with bash variable expansion and Docker Compose interpolation. Stick to alphanumeric characters and simple symbols (`: @ ! % ^ & * _`).
 - **No domain needed** — uses sslip.io for wildcard DNS. Any IP maps automatically (e.g. `feat.preview.1.2.3.4.sslip.io` → `1.2.3.4`). No SSL (plain HTTP) since sslip.io rate-limits Let's Encrypt.
 - **n8n uses SSH node** (not `executeCommand`) — the `executeCommand` node is disabled by default in n8n 2.x for security. The SSH node connects to the host via `172.17.0.1` (Docker bridge gateway).
 - **Composer install** uses the `composer:latest` Docker image with `--ignore-platform-reqs` (bcmath etc. are available at runtime in the craftcms container, not needed at install time).
-- **Craft install** runs automatically on fresh databases using `CRAFT_ADMIN_EMAIL` and `CRAFT_ADMIN_PASSWORD` from `.env`. If a `baseline.sql.gz` dump exists, it imports that and runs migrations instead.
+- **Craft install** runs automatically on fresh databases using `CRAFT_ADMIN_EMAIL` and `CRAFT_ADMIN_PASSWORD` from `.env`. If a `baseline.sql.gz` dump exists, it imports that and runs migrations instead. After install/migrate, `php craft up` runs to apply content migrations.
+- **n8n workflow JSON:** The `SERVER_IP` is hardcoded in the workflow JSON (not an env variable) because n8n expressions don't support nested `{{ }}` syntax. If the server IP changes, update it in `n8n-workflow-preview-deploy.json` and reimport. To update the live workflow, use `n8n import:workflow --input=file.json --force` (this deactivates it — reactivate in the UI after).
+- **n8n import drops IF-node connections.** After importing the workflow JSON, manually connect: Is Closed `true` → Destroy Preview → Comment Destroyed, Is Closed `false` → Launch Preview → Comment Preview URL. Also re-select credentials on nodes showing `?` or warning icons.
 - All scripts source `~/preview-system/.env` for credentials — nothing is hardcoded.
 - Each preview container uses ~150MB RAM (shared MySQL). The server can handle ~8–10 concurrent previews comfortably.
 - Previews auto-cleanup after 48 hours via cleanup.sh. Set up a cron job or n8n cron node to run it.

@@ -44,25 +44,37 @@
     },
     {
       "parameters": {
-        "resource": "command",
+        "authentication": "privateKey",
         "command": "=/home/deploy/preview-system/scripts/destroy.sh \"{{ $('Webhook').item.json.body.repository.name }}\" \"{{ $('Webhook').item.json.body.pull_request.number }}\""
       },
       "id": "a1b2c3d4-0001-0001-0001-000000000003",
       "name": "Destroy Preview",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [0, 0]
+      "position": [0, 0],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "",
+          "name": "SSH Private Key account"
+        }
+      }
     },
     {
       "parameters": {
-        "resource": "command",
+        "authentication": "privateKey",
         "command": "=/home/deploy/preview-system/scripts/launch.sh \"{{ $('Webhook').item.json.body.pull_request.head.ref }}\" \"{{ $('Webhook').item.json.body.repository.clone_url }}\" \"{{ $('Webhook').item.json.body.repository.name }}\" \"{{ $('Webhook').item.json.body.pull_request.number }}\""
       },
       "id": "a1b2c3d4-0001-0001-0001-000000000004",
       "name": "Launch Preview",
       "type": "n8n-nodes-base.ssh",
       "typeVersion": 1,
-      "position": [0, 240]
+      "position": [0, 240],
+      "credentials": {
+        "sshPrivateKey": {
+          "id": "",
+          "name": "SSH Private Key account"
+        }
+      }
     },
     {
       "parameters": {
@@ -95,7 +107,7 @@
         "nodeCredentialType": "githubApi",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ body: '## Preview deployed\\n\\nBranch: `' + $('Webhook').item.json.body.pull_request.head.ref + '`\\nPR: #' + $('Webhook').item.json.body.pull_request.number + '\\nURL: http://' + $('Webhook').item.json.body.repository.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') + '-pr-' + $('Webhook').item.json.body.pull_request.number + '.preview.' + '{{ $env.SERVER_IP || \"SERVER_IP\" }}' + '.sslip.io\\n\\nAdmin: http://' + $('Webhook').item.json.body.repository.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') + '-pr-' + $('Webhook').item.json.body.pull_request.number + '.preview.' + '{{ $env.SERVER_IP || \"SERVER_IP\" }}' + '.sslip.io/admin' }) }}",
+        "jsonBody": "={{ JSON.stringify({ body: '## Preview deployed\\n\\nBranch: `' + $('Webhook').item.json.body.pull_request.head.ref + '`\\nPR: #' + $('Webhook').item.json.body.pull_request.number + '\\nURL: http://' + $('Webhook').item.json.body.repository.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') + '-pr-' + $('Webhook').item.json.body.pull_request.number + '.preview.46.225.190.12.sslip.io\\n\\nAdmin: http://' + $('Webhook').item.json.body.repository.name.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') + '-pr-' + $('Webhook').item.json.body.pull_request.number + '.preview.46.225.190.12.sslip.io/admin' }) }}",
         "options": {}
       },
       "id": "a1b2c3d4-0001-0001-0001-000000000006",

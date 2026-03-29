@@ -109,6 +109,10 @@ else
         --interactive=0 2>/dev/null || true
 fi
 
+# Run craft up (applies pending migrations + project config in one step)
+echo "Running Craft update..."
+docker exec "craft-${PREVIEW_ID}" php craft up --no-backup --interactive=0 2>/dev/null || true
+
 # Clear caches
 docker exec "craft-${PREVIEW_ID}" php craft clear-caches/all --interactive=0 2>/dev/null || true
 
