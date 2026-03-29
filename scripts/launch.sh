@@ -81,6 +81,7 @@ fi
 # Fix permissions for Craft CMS
 chmod -R 777 "$PREVIEW_DIR/src/storage" 2>/dev/null || mkdir -p "$PREVIEW_DIR/src/storage" && chmod -R 777 "$PREVIEW_DIR/src/storage"
 chmod -R 777 "$PREVIEW_DIR/src/web/cpresources" 2>/dev/null || mkdir -p "$PREVIEW_DIR/src/web/cpresources" && chmod -R 777 "$PREVIEW_DIR/src/web/cpresources"
+chmod -R 777 "$PREVIEW_DIR/src/config" 2>/dev/null || true
 
 # Start containers
 cd "$PREVIEW_DIR"
@@ -103,7 +104,7 @@ else
         --username="${CRAFT_ADMIN_EMAIL}" \
         --email="${CRAFT_ADMIN_EMAIL}" \
         --password="${CRAFT_ADMIN_PASSWORD}" \
-        --siteName="Preview" \
+        --siteName="${REPO_NAME} PR #${PR_NUMBER}" \
         --siteUrl="http://${DOMAIN}" \
         --language="en-US" \
         --interactive=0 2>/dev/null || true
