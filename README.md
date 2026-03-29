@@ -1,6 +1,6 @@
 # Craft CMS Preview System
 
-Write a ticket with a markdown spec. An AI agent picks it up, creates a branch, implements the changes, opens a PR, and spins up a live preview environment — ready for human feedback.
+Write a ticket with a markdown spec. An AI agent picks it up, creates a branch, implements the changes, opens a PR, and spins up a live preview environment — ready for human feedback / reviews and further iterations by human devs.
 
 That's the goal. Right now, the preview infrastructure is working: open a PR and a full Craft CMS environment is deployed automatically.
 
